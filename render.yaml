@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: imposter-game-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: USE_REDIS
+        value: "false"
+      - key: LOG_LEVEL
+        value: info
+      - key: WORD_REVEAL_DURATION_MS
+        value: "15000"
+      - key: DESCRIPTION_DURATION_MS
+        value: "120000"
+      - key: DISCUSSION_DURATION_MS
+        value: "180000"
+      - key: VOTING_DURATION_MS
+        value: "60000"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+      # Set these manually in the Render dashboard after deploy:
+      # CLIENT_URL = your Vercel frontend URL
