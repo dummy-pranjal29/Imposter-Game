@@ -190,14 +190,22 @@ class WebRTCService {
       }
     };
 
-    // Remote track received — build a stream from the track if streams[] is empty
+    // Remote track received.
+    // ontrack fires once per track (audio, then video). streams[0] is a live
+    // object — its reference never changes, so React won't re-run the effect.
+    // We create a new MediaStream snapshot with ALL tracks received so far so
+    // every ontrack call produces a new reference and srcObject gets re-assigned.
     pc.ontrack = ({ track, streams }) => {
-      const stream = streams[0] ?? new MediaStream([track]);
+      const existingTracks = streams[0] ? streams[0].getTracks() : [];
+      const allTracks = existingTracks.includes(track)
+        ? existingTracks
+        : [...existingTracks, track];
+      const snapshot = new MediaStream(allTracks);
 
       if (this.onRemoteStream) {
-        this.onRemoteStream(userId, stream);
+        this.onRemoteStream(userId, snapshot);
       } else {
-        this.pendingStreams.set(userId, stream);
+        this.pendingStreams.set(userId, snapshot);
       }
     };
 

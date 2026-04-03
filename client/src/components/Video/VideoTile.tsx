@@ -18,10 +18,8 @@ export function VideoTile({ displayName, stream, isLocal, isConnected, connState
     const el = videoRef.current;
     if (!el) return;
     if (stream) {
-      if (el.srcObject !== stream) {
-        el.srcObject = stream;
-        el.play().catch(() => {});
-      }
+      el.srcObject = stream;
+      el.play().catch(() => {});
     } else {
       el.srcObject = null;
     }
