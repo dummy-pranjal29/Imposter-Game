@@ -12,8 +12,22 @@ import { UserId, PublicPlayer } from '../types';
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
+  // Free TURN relay — required for cross-network P2P (symmetric NAT)
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
 
 const USER_ORDER: UserId[] = ['user1', 'user2', 'user3', 'user4', 'user5'];
@@ -23,6 +37,7 @@ type StreamCallback = (userId: UserId, stream: MediaStream | null) => void;
 class WebRTCService {
   private peers           = new Map<UserId, RTCPeerConnection>();
   private localStream:  MediaStream | null = null;
+  private localStreamPromise: Promise<MediaStream> | null = null;
   private onRemoteStream: StreamCallback | null = null;
 
   // Streams that arrived before the UI callback was registered
@@ -47,34 +62,41 @@ class WebRTCService {
     this.pendingStreams.clear();
   }
 
-  async getLocalStream(): Promise<MediaStream> {
-    if (this.localStream) return this.localStream;
+  getLocalStream(): Promise<MediaStream> {
+    // Return cached stream immediately
+    if (this.localStream) return Promise.resolve(this.localStream);
+    // Return in-flight promise so concurrent callers don't race into getUserMedia
+    if (this.localStreamPromise) return this.localStreamPromise;
 
-    try {
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width:     { ideal: 640 },
-          height:    { ideal: 480 },
-          frameRate: { ideal: 24 },
-          facingMode: 'user',
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        },
-      });
-    } catch {
-      // Camera denied — try audio only
+    this.localStreamPromise = (async () => {
       try {
-        this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width:     { ideal: 640 },
+            height:    { ideal: 480 },
+            frameRate: { ideal: 24 },
+            facingMode: 'user',
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100,
+          },
+        });
       } catch {
-        // No media at all — return a silent/blank stream so the app still works
-        this.localStream = new MediaStream();
+        // Camera denied — try audio only
+        try {
+          this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch {
+          // No media at all — return a silent/blank stream so the app still works
+          this.localStream = new MediaStream();
+        }
       }
-    }
+      this.localStreamPromise = null;
+      return this.localStream!;
+    })();
 
-    return this.localStream;
+    return this.localStreamPromise;
   }
 
   /**
@@ -169,6 +191,7 @@ class WebRTCService {
     this.pendingStreams.clear();
     this.localStream?.getTracks().forEach((t) => t.stop());
     this.localStream = null;
+    this.localStreamPromise = null;
     this.onRemoteStream = null;
   }
 
