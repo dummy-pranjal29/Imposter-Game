@@ -1,0 +1,76 @@
+.container { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.title { font-size: 1.5rem; font-weight: 700; }
+.sub   { color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; }
+
+/* Own word reminder */
+.myWord {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid;
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+}
+.civilianWord { border-color: var(--success); background: rgba(34,197,94,0.07); }
+.imposterWord { border-color: var(--danger);  background: rgba(239,68,68,0.07); }
+
+.myWordLabel { color: var(--text-muted); font-size: 0.82rem; }
+.myWordValue { font-weight: 800; font-size: 1.1rem; }
+.civilianWord .myWordValue { color: var(--success); }
+.imposterWord .myWordValue { color: var(--danger); }
+
+/* Section */
+.section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+}
+
+.sectionLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.descList { display: flex; flex-direction: column; gap: 0.45rem; }
+
+.descRow {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.85rem;
+}
+.mine    { border-color: var(--accent); }
+.missing { opacity: 0.55; }
+
+.descMeta { display: flex; align-items: center; gap: 0.4rem; }
+.descName { font-weight: 600; font-size: 0.875rem; }
+
+.youTag {
+  background: var(--accent);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+}
+
+.descText { color: var(--accent-light); font-style: italic; font-size: 0.875rem; }
+.noDesc   { color: var(--border); font-style: italic; font-size: 0.82rem; }
+
+.empty { color: var(--text-muted); font-size: 0.85rem; }
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.5;
+}

@@ -1,0 +1,28 @@
+.toast {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--danger);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  z-index: 9999;
+  box-shadow: var(--shadow);
+  max-width: 400px;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn { from { opacity: 0; top: 0; } to { opacity: 1; top: 1.25rem; } }
+
+.close {
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  font-size: 1rem;
+  padding: 0.1rem 0.3rem;
+  flex-shrink: 0;
+}
+.close:hover { color: #fff; }

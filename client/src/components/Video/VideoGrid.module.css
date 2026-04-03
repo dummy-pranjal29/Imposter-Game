@@ -1,0 +1,16 @@
+.grid {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  padding: 8px;
+  background: #000;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Dynamic grid layout based on player count */
+.grid[data-count="1"] { grid-template-columns: 1fr; }
+.grid[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.grid[data-count="3"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.grid[data-count="4"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.grid[data-count="5"] { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }

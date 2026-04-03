@@ -1,0 +1,186 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Timer bar ─────────────────────────────────────────────────────────── */
+.timerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.timerNum {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-light);
+}
+.urgent .timerNum {
+  color: var(--danger);
+  animation: pulse 0.6s infinite alternate;
+}
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+
+/* ── Word reminder ─────────────────────────────────────────────────────── */
+.wordReminder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid;
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+}
+.normal   { border-color: var(--success); background: rgba(34,197,94,0.07); }
+.imposter { border-color: var(--danger);  background: rgba(239,68,68,0.07); }
+
+.wordLabel { color: var(--text-muted); font-size: 0.85rem; }
+.wordValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.normal   .wordValue { color: var(--success); }
+.imposter .wordValue { color: var(--danger); }
+
+/* ── Form ──────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.label strong { color: var(--text); }
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.input {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--accent-light); outline: none; }
+.input:disabled { opacity: 0.5; cursor: not-allowed; }
+.inputError { border-color: var(--danger) !important; }
+
+.wordCount {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+}
+.overLimit { color: var(--danger); font-weight: 700; }
+
+.errorMsg { color: var(--danger); font-size: 0.8rem; }
+
+.submitBtn {
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.85rem;
+  transition: opacity 0.15s;
+}
+.submitBtn:hover:not(:disabled) { opacity: 0.85; }
+.submitBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Submitted state ───────────────────────────────────────────────────── */
+.submitted {
+  background: rgba(34,197,94,0.08);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+.checkmark { color: var(--success); font-size: 2rem; }
+.submitted p { font-weight: 600; }
+.muted { color: var(--text-muted); font-size: 0.85rem; font-weight: 400 !important; }
+
+/* ── Progress ──────────────────────────────────────────────────────────── */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.progressBar {
+  background: var(--surface2);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+.progressFill {
+  background: var(--accent);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.playerPips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.pip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.pipInitial {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  height: 36px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+.pipDone .pipInitial {
+  background: rgba(34,197,94,0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+.pipYou {
+  font-size: 0.65rem;
+  color: var(--accent-light);
+}

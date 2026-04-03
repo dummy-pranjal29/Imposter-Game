@@ -1,0 +1,67 @@
+.container {
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+}
+
+.imposterTheme { border-color: var(--danger);  background: rgba(239,68,68,0.06); }
+.normalTheme   { border-color: var(--success); background: rgba(34,197,94,0.06); }
+
+.roleTag {
+  display: inline-block;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 0.3rem 0.75rem;
+  align-self: flex-start;
+}
+.imposterTheme .roleTag { background: var(--danger);  color: #fff; }
+.normalTheme   .roleTag { background: var(--success); color: #fff; }
+
+.categoryLabel { color: var(--text-muted); font-size: 0.9rem; }
+.categoryLabel strong { color: var(--text); }
+
+.wordCard {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+
+.wordHint { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
+
+.word {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.imposterTheme .word { color: var(--danger); }
+.normalTheme   .word { color: var(--success); }
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.rules strong { color: var(--text); }
+
+.timerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.timerNum { color: var(--accent-light); font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
+
+.loading { color: var(--text-muted); text-align: center; padding: 2rem; }

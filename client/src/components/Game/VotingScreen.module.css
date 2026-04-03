@@ -1,0 +1,105 @@
+.container { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.title { font-size: 1.5rem; font-weight: 700; }
+.sub   { color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; }
+
+/* Progress */
+.progress { display: flex; flex-direction: column; gap: 0.4rem; }
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.progressBar {
+  background: var(--surface2);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+.progressFill {
+  background: var(--accent);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* Player cards */
+.playerList { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.playerCard {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1.1rem;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  width: 100%;
+}
+.playerCard:hover:not(:disabled) {
+  border-color: var(--accent-light);
+  background: var(--surface);
+}
+.playerCard:disabled { cursor: default; }
+
+.selected {
+  border-color: var(--danger) !important;
+  background: rgba(239,68,68,0.09) !important;
+}
+.dimmed { opacity: 0.38; }
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.playerName { font-weight: 600; font-size: 0.95rem; }
+.badges { display: flex; gap: 0.4rem; align-items: center; }
+
+.votedBadge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+}
+.myVoteBadge {
+  background: var(--danger);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+}
+
+/* Description inside card */
+.descriptionBox {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.descLabel { color: var(--text-muted); font-size: 0.75rem; }
+.descText  { color: var(--accent-light); font-size: 0.875rem; font-style: italic; }
+.noDesc    { color: var(--border); font-size: 0.8rem; font-style: italic; }
+
+/* My description reminder */
+.myDescReminder {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.hint    { color: var(--text-muted); font-size: 0.8rem; text-align: center; }
+.confirm { color: var(--success); font-size: 0.875rem; text-align: center; }

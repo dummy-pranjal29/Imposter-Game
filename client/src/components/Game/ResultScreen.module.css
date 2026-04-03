@@ -1,0 +1,145 @@
+.container { display: flex; flex-direction: column; gap: 1.1rem; }
+
+/* Verdict */
+.verdict {
+  border: 2px solid;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+.caught  { border-color: var(--success); background: rgba(34,197,94,0.08); }
+.escaped { border-color: var(--danger);  background: rgba(239,68,68,0.08); }
+
+.emoji { font-size: 2.2rem; }
+.verdict h2 { font-size: 1.35rem; font-weight: 800; }
+.verdict p  { color: var(--text-muted); font-size: 0.875rem; }
+
+.youWereBadge {
+  margin-top: 0.4rem;
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+}
+
+/* Word reveal */
+.wordRevealBlock {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.sectionLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.sectionLabel strong { color: var(--text); text-transform: none; letter-spacing: 0; }
+
+.wordRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.wordBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 0.75rem 0.5rem;
+}
+.wordTag   { font-size: 0.7rem; color: var(--text-muted); }
+.wordValue { font-size: 1.15rem; font-weight: 800; }
+.civilianColor { color: var(--success); }
+.imposterColor { color: var(--danger); }
+.wordSep { color: var(--text-muted); font-size: 0.8rem; flex-shrink: 0; }
+
+.imposterLine { font-size: 0.875rem; color: var(--text-muted); }
+.imposterLine strong { color: var(--text); }
+.youLabel { color: var(--accent-light); }
+
+/* Sections */
+.section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.1rem;
+}
+
+/* Descriptions */
+.descList { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.descRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.85rem;
+}
+.imposterDescRow {
+  border-color: var(--danger);
+  background: rgba(239,68,68,0.07);
+}
+
+.descMeta { display: flex; align-items: center; gap: 0.45rem; }
+.descName { font-weight: 600; font-size: 0.875rem; }
+.imposterTag {
+  background: var(--danger);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+}
+.youTag {
+  background: var(--accent);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+}
+.descText { color: var(--accent-light); font-style: italic; font-size: 0.875rem; }
+
+/* Votes */
+.voteList { display: flex; flex-direction: column; gap: 0.35rem; }
+.voteRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+}
+.arrow { color: var(--text-muted); }
+.correctVote { color: var(--success); font-weight: 600; }
+.noVotes { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Actions */
+.playAgainBtn {
+  background: var(--accent);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 1rem;
+  transition: opacity 0.15s;
+}
+.playAgainBtn:hover { opacity: 0.85; }
+
+.waiting { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
