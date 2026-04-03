@@ -12,7 +12,7 @@ export function HomePage() {
     setCreating(true);
     setError('');
     try {
-      const res = await fetch('/api/rooms', { method: 'POST' });
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL ?? ''}/api/rooms`, { method: 'POST' });
       if (!res.ok) throw new Error('Failed to create room');
       const { roomId } = await res.json();
       navigate(`/room/${roomId}`);

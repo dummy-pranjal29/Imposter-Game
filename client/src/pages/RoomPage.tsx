@@ -21,7 +21,7 @@ export function RoomPage() {
   // Validate room exists before asking for name
   useEffect(() => {
     if (!roomId) return;
-    fetch(`/api/rooms/${roomId}`)
+    fetch(`${import.meta.env.VITE_SERVER_URL ?? ''}/api/rooms/${roomId}`)
       .then((r) => r.json())
       .then((data) => {
         setRoomMeta(data);
