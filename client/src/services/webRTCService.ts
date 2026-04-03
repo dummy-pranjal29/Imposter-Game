@@ -1,38 +1,24 @@
 import { socketService } from './socketService';
 import { UserId, PublicPlayer } from '../types';
 
-function buildIceServers(): RTCIceServer[] {
-  const servers: RTCIceServer[] = [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ];
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
 
-  const turnUrl    = import.meta.env.VITE_TURN_URL;
-  const username   = import.meta.env.VITE_TURN_USERNAME;
-  const credential = import.meta.env.VITE_TURN_CREDENTIAL;
-
-  if (turnUrl && username && credential) {
-    // Custom TURN credentials from env (preferred)
-    servers.push(
-      { urls: `turn:${turnUrl}:80`,                username, credential },
-      { urls: `turn:${turnUrl}:80?transport=tcp`,  username, credential },
-      { urls: `turn:${turnUrl}:443`,               username, credential },
-      { urls: `turn:${turnUrl}:443?transport=tcp`, username, credential },
-    );
-  } else {
-    // Open Relay Project — free public TURN fallback
-    servers.push(
-      { urls: 'turn:openrelay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username: 'openrelayproject', credential: 'openrelayproject' },
-    );
+async function fetchIceServers(): Promise<RTCIceServer[]> {
+  const credUrl = import.meta.env.VITE_TURN_CREDENTIALS_URL;
+  if (credUrl) {
+    try {
+      const res = await fetch(credUrl);
+      if (res.ok) {
+        const servers = await res.json();
+        if (Array.isArray(servers) && servers.length > 0) return servers;
+      }
+    } catch { /* fall through to fallback */ }
   }
-
-  return servers;
+  return FALLBACK_ICE_SERVERS;
 }
-
-const ICE_SERVERS = buildIceServers();
 
 const USER_ORDER: UserId[] = ['user1', 'user2', 'user3', 'user4', 'user5'];
 
@@ -40,28 +26,25 @@ type StreamCallback = (userId: UserId, stream: MediaStream | null) => void;
 type StateCallback  = (userId: UserId, state: RTCPeerConnectionState) => void;
 
 class WebRTCService {
-  private peers                = new Map<UserId, RTCPeerConnection>();
-  private localStream:           MediaStream | null = null;
-  private localStreamPromise:    Promise<MediaStream | null> | null = null;
-  private onRemoteStream:        StreamCallback | null = null;
-  private onConnectionState:     StateCallback | null = null;
+  private peers             = new Map<UserId, RTCPeerConnection>();
+  private localStream:        MediaStream | null = null;
+  private localStreamPromise: Promise<MediaStream | null> | null = null;
+  private iceServers:         RTCIceServer[] | null = null;
+  private onRemoteStream:     StreamCallback | null = null;
+  private onConnectionState:  StateCallback | null = null;
 
-  // Owned stream per peer — tracks are added to this as they arrive
-  private peerStreams           = new Map<UserId, MediaStream>();
-
-  // Streams buffered before the UI callback was registered
-  private pendingStreams        = new Map<UserId, MediaStream>();
-
+  // Owned stream per peer — tracks accumulated as they arrive
+  private peerStreams       = new Map<UserId, MediaStream>();
+  // Buffered before UI callback registered
+  private pendingStreams    = new Map<UserId, MediaStream>();
   // ICE candidates queued before remote description is set
-  private iceCandidateQueue    = new Map<UserId, RTCIceCandidateInit[]>();
+  private iceCandidateQueue = new Map<UserId, RTCIceCandidateInit[]>();
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   setStreamCallback(cb: StreamCallback): void {
     this.onRemoteStream = cb;
-    for (const [userId, stream] of this.pendingStreams) {
-      cb(userId, stream);
-    }
+    for (const [userId, stream] of this.pendingStreams) cb(userId, stream);
     this.pendingStreams.clear();
   }
 
@@ -81,10 +64,8 @@ class WebRTCService {
         });
       } catch {
         try {
-          // Camera denied — audio only
           this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         } catch {
-          // Nothing available — return null so VideoTile shows avatar instead of black box
           this.localStream = null;
         }
       }
@@ -97,14 +78,14 @@ class WebRTCService {
 
   async initMesh(players: PublicPlayer[], myUserId: UserId): Promise<void> {
     await this.getLocalStream();
-    const myIndex = USER_ORDER.indexOf(myUserId);
+    // Fetch ICE servers once and cache for all peer connections
+    this.iceServers = await fetchIceServers();
 
+    const myIndex = USER_ORDER.indexOf(myUserId);
     for (const player of players) {
       if (player.userId === myUserId) continue;
       if (!player.isConnected) continue;
-
-      const theirIndex = USER_ORDER.indexOf(player.userId);
-      if (myIndex < theirIndex) {
+      if (myIndex < USER_ORDER.indexOf(player.userId)) {
         await this.createOffer(player.userId);
       }
     }
@@ -112,6 +93,7 @@ class WebRTCService {
 
   async handleOffer(fromUserId: UserId, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit | null> {
     await this.getLocalStream();
+    if (!this.iceServers) this.iceServers = await fetchIceServers();
     const pc = this.getOrCreatePeer(fromUserId);
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     await this.flushIceCandidates(fromUserId, pc);
@@ -137,9 +119,7 @@ class WebRTCService {
       this.iceCandidateQueue.set(fromUserId, q);
       return;
     }
-    try {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch { /* stale candidate */ }
+    try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* stale */ }
   }
 
   closePeer(userId: UserId): void {
@@ -163,6 +143,7 @@ class WebRTCService {
     this.localStream?.getTracks().forEach((t) => t.stop());
     this.localStream = null;
     this.localStreamPromise = null;
+    this.iceServers = null;
     this.onRemoteStream = null;
     this.onConnectionState = null;
   }
@@ -179,16 +160,17 @@ class WebRTCService {
   private getOrCreatePeer(userId: UserId): RTCPeerConnection {
     if (this.peers.has(userId)) return this.peers.get(userId)!;
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS, iceCandidatePoolSize: 10 });
+    const pc = new RTCPeerConnection({
+      iceServers: this.iceServers ?? FALLBACK_ICE_SERVERS,
+      iceCandidatePoolSize: 10,
+    });
 
-    // Add local tracks
     if (this.localStream) {
       for (const track of this.localStream.getTracks()) {
         pc.addTrack(track, this.localStream);
       }
     }
 
-    // ICE candidate relay
     pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
         const json = candidate.toJSON();
@@ -202,47 +184,26 @@ class WebRTCService {
       }
     };
 
-    // Remote track received.
-    // ontrack fires once per track (audio then video). We accumulate all tracks
-    // into our own owned MediaStream so we never lose earlier tracks. Then we
-    // snapshot it into a NEW MediaStream so React always gets a new reference
-    // and the VideoTile effect always re-runs to update srcObject.
+    // Accumulate tracks into owned stream, snapshot on each arrival so
+    // React always gets a new reference and re-sets srcObject
     pc.ontrack = ({ track }) => {
       let owned = this.peerStreams.get(userId);
-      if (!owned) {
-        owned = new MediaStream();
-        this.peerStreams.set(userId, owned);
-      }
-      if (!owned.getTrackById(track.id)) {
-        owned.addTrack(track);
-      }
-      // Snapshot = new reference every time = React re-renders = srcObject updated
+      if (!owned) { owned = new MediaStream(); this.peerStreams.set(userId, owned); }
+      if (!owned.getTrackById(track.id)) owned.addTrack(track);
       const snapshot = new MediaStream(owned.getTracks());
-
-      if (this.onRemoteStream) {
-        this.onRemoteStream(userId, snapshot);
-      } else {
-        this.pendingStreams.set(userId, snapshot);
-      }
+      if (this.onRemoteStream) this.onRemoteStream(userId, snapshot);
+      else this.pendingStreams.set(userId, snapshot);
     };
 
-    // Connection state — notify UI + auto-restart on failure
     pc.onconnectionstatechange = () => {
       this.onConnectionState?.(userId, pc.connectionState);
-
-      if (pc.connectionState === 'failed') {
-        pc.restartIce();
-      }
+      if (pc.connectionState === 'failed') pc.restartIce();
       if (pc.connectionState === 'disconnected') {
         setTimeout(() => {
-          if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-            pc.restartIce();
-          }
+          if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') pc.restartIce();
         }, 3000);
       }
-      if (pc.connectionState === 'closed') {
-        this.peers.delete(userId);
-      }
+      if (pc.connectionState === 'closed') this.peers.delete(userId);
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -256,9 +217,7 @@ class WebRTCService {
   private async flushIceCandidates(userId: UserId, pc: RTCPeerConnection): Promise<void> {
     const queued = this.iceCandidateQueue.get(userId) ?? [];
     for (const candidate of queued) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch { /* stale */ }
+      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* stale */ }
     }
     this.iceCandidateQueue.delete(userId);
   }
