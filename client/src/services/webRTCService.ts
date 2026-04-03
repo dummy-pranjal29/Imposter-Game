@@ -1,31 +1,29 @@
 import { socketService } from './socketService';
 import { UserId, PublicPlayer } from '../types';
 
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  // Open Relay Project — free public TURN (valid credentials)
-  {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:80?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-];
+function buildIceServers(): RTCIceServer[] {
+  const servers: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ];
+
+  const turnUrl  = import.meta.env.VITE_TURN_URL;
+  const username = import.meta.env.VITE_TURN_USERNAME;
+  const credential = import.meta.env.VITE_TURN_CREDENTIAL;
+
+  if (turnUrl && username && credential) {
+    servers.push(
+      { urls: `turn:${turnUrl}:80`,                    username, credential },
+      { urls: `turn:${turnUrl}:80?transport=tcp`,      username, credential },
+      { urls: `turn:${turnUrl}:443`,                   username, credential },
+      { urls: `turn:${turnUrl}:443?transport=tcp`,     username, credential },
+    );
+  }
+
+  return servers;
+}
+
+const ICE_SERVERS = buildIceServers();
 
 const USER_ORDER: UserId[] = ['user1', 'user2', 'user3', 'user4', 'user5'];
 
