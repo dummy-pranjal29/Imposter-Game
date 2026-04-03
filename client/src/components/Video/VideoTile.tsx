@@ -8,23 +8,19 @@ interface Props {
   stream: MediaStream | null;
   isLocal: boolean;
   isConnected: boolean;
+  connState: RTCPeerConnectionState | null;
 }
 
-export function VideoTile({ displayName, stream, isLocal, isConnected }: Props) {
+export function VideoTile({ displayName, stream, isLocal, isConnected, connState }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-
     if (stream) {
-      // Only update srcObject if it actually changed — avoids flicker
       if (el.srcObject !== stream) {
         el.srcObject = stream;
-        // Some browsers need an explicit play() after srcObject is set
-        el.play().catch(() => {
-          // Autoplay blocked — user gesture required; browser will handle
-        });
+        el.play().catch(() => {});
       }
     } else {
       el.srcObject = null;
@@ -38,6 +34,9 @@ export function VideoTile({ displayName, stream, isLocal, isConnected }: Props) 
     .toUpperCase()
     .slice(0, 2);
 
+  const connecting = !isLocal && !stream && connState !== 'failed' && connState !== 'closed';
+  const failed     = !isLocal && !stream && (connState === 'failed' || connState === 'closed');
+
   return (
     <div className={`${styles.tile} ${!isConnected ? styles.offline : ''}`}>
       {stream ? (
@@ -45,16 +44,20 @@ export function VideoTile({ displayName, stream, isLocal, isConnected }: Props) 
           ref={videoRef}
           autoPlay
           playsInline
-          muted={isLocal}           // mute only local to prevent echo
+          muted={isLocal}
           className={`${styles.video} ${isLocal ? styles.mirrored : ''}`}
         />
       ) : (
-        <div className={styles.avatar}>{initials}</div>
+        <div className={styles.avatar}>
+          {initials}
+          {connecting && <div className={styles.connLabel}>connecting…</div>}
+          {failed     && <div className={styles.connLabel}>no video</div>}
+        </div>
       )}
 
       <div className={styles.nameTag}>
         {displayName}
-        {isLocal  && <span className={styles.youLabel}> (you)</span>}
+        {isLocal   && <span className={styles.youLabel}> (you)</span>}
         {!isConnected && <span className={styles.offlineLabel}> • offline</span>}
       </div>
     </div>

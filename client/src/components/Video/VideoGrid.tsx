@@ -5,54 +5,43 @@ import { UserId } from '../../types';
 import { VideoTile } from './VideoTile';
 import styles from './VideoGrid.module.css';
 
-/**
- * VideoGrid — renders local + remote video tiles.
- *
- * Critical ordering:
- *   1. Register the stream callback with webRTCService FIRST (on mount),
- *      before any async work, so no remote stream is ever missed.
- *   2. Get local stream after callback is registered.
- *   3. The callback is stored in a ref so its identity never changes,
- *      preventing stale-closure bugs across re-renders.
- */
 export function VideoGrid() {
   const { players, myUserId } = useGameStore();
-  const [streams, setStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [streams, setStreams]         = useState<Map<string, MediaStream>>(new Map());
+  const [connStates, setConnStates]   = useState<Map<string, RTCPeerConnectionState>>(new Map());
 
-  // Stable ref — identity never changes, so no re-registration needed
-  const handleRemoteStreamRef = useRef((userId: UserId, stream: MediaStream | null) => {
+  const streamCbRef = useRef((userId: UserId, stream: MediaStream | null) => {
     setStreams((prev) => {
       const next = new Map(prev);
-      if (stream) {
-        next.set(userId, stream);
-      } else {
-        next.delete(userId);
-      }
+      if (stream) next.set(userId, stream);
+      else next.delete(userId);
+      return next;
+    });
+  });
+
+  const stateCbRef = useRef((userId: UserId, state: RTCPeerConnectionState) => {
+    setConnStates((prev) => {
+      const next = new Map(prev);
+      next.set(userId, state);
       return next;
     });
   });
 
   useEffect(() => {
-    // Step 1: register callback IMMEDIATELY — before any awaits
-    webRTCService.setStreamCallback(handleRemoteStreamRef.current);
+    webRTCService.setStreamCallback(streamCbRef.current);
+    webRTCService.setConnectionStateCallback(stateCbRef.current);
 
-    // Step 2: get local stream and put it in state
     webRTCService.getLocalStream().then((stream) => {
       setStreams((prev) => {
         const next = new Map(prev);
         next.set('local', stream);
         return next;
       });
-    }).catch(() => {
-      // Permission denied — continue without video
-    });
-
-    // No cleanup needed: webRTCService lifetime > component lifetime
-  }, []); // run once on mount only
+    }).catch(() => { /* permission denied */ });
+  }, []);
 
   return (
     <div className={styles.grid} data-count={players.length}>
-      {/* Local tile */}
       {myUserId && (
         <VideoTile
           key="local"
@@ -61,10 +50,10 @@ export function VideoGrid() {
           stream={streams.get('local') ?? null}
           isLocal={true}
           isConnected={true}
+          connState={null}
         />
       )}
 
-      {/* Remote tiles */}
       {players
         .filter((p) => p.userId !== myUserId)
         .map((player) => (
@@ -75,6 +64,7 @@ export function VideoGrid() {
             stream={streams.get(player.userId) ?? null}
             isLocal={false}
             isConnected={player.isConnected}
+            connState={connStates.get(player.userId) ?? null}
           />
         ))}
     </div>
