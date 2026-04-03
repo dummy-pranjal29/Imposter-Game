@@ -32,6 +32,7 @@ export function VideoGrid() {
     webRTCService.setConnectionStateCallback(stateCbRef.current);
 
     webRTCService.getLocalStream().then((stream) => {
+      if (!stream) return;
       setStreams((prev) => {
         const next = new Map(prev);
         next.set('local', stream);

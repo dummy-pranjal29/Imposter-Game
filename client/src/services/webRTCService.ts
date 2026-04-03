@@ -4,26 +4,26 @@ import { UserId, PublicPlayer } from '../types';
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  // Metered relay — more reliable than openrelay
+  // Open Relay Project — free public TURN (valid credentials)
   {
-    urls: 'turn:a.relay.metered.ca:80',
-    username: 'e499f89f50c5e6a6c3ef8ca7',
-    credential: 'uMQbqMrUHudFXvO7',
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
   },
   {
-    urls: 'turn:a.relay.metered.ca:80?transport=tcp',
-    username: 'e499f89f50c5e6a6c3ef8ca7',
-    credential: 'uMQbqMrUHudFXvO7',
+    urls: 'turn:openrelay.metered.ca:80?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
   },
   {
-    urls: 'turn:a.relay.metered.ca:443',
-    username: 'e499f89f50c5e6a6c3ef8ca7',
-    credential: 'uMQbqMrUHudFXvO7',
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
   },
   {
-    urls: 'turn:a.relay.metered.ca:443?transport=tcp',
-    username: 'e499f89f50c5e6a6c3ef8ca7',
-    credential: 'uMQbqMrUHudFXvO7',
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
   },
 ];
 
@@ -35,7 +35,7 @@ type StateCallback  = (userId: UserId, state: RTCPeerConnectionState) => void;
 class WebRTCService {
   private peers                = new Map<UserId, RTCPeerConnection>();
   private localStream:           MediaStream | null = null;
-  private localStreamPromise:    Promise<MediaStream> | null = null;
+  private localStreamPromise:    Promise<MediaStream | null> | null = null;
   private onRemoteStream:        StreamCallback | null = null;
   private onConnectionState:     StateCallback | null = null;
 
@@ -59,7 +59,7 @@ class WebRTCService {
     this.onConnectionState = cb;
   }
 
-  getLocalStream(): Promise<MediaStream> {
+  getLocalStream(): Promise<MediaStream | null> {
     if (this.localStream) return Promise.resolve(this.localStream);
     if (this.localStreamPromise) return this.localStreamPromise;
 
@@ -71,14 +71,16 @@ class WebRTCService {
         });
       } catch {
         try {
+          // Camera denied — audio only
           this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         } catch {
-          this.localStream = new MediaStream();
+          // Nothing available — return null so VideoTile shows avatar instead of black box
+          this.localStream = null;
         }
       }
       this.localStreamPromise = null;
-      return this.localStream!;
-    })();
+      return this.localStream;
+    })() as Promise<MediaStream | null>;
 
     return this.localStreamPromise;
   }
