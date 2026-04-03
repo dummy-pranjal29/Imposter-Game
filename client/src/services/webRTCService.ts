@@ -39,7 +39,10 @@ class WebRTCService {
   private onRemoteStream:        StreamCallback | null = null;
   private onConnectionState:     StateCallback | null = null;
 
-  // Tracks that arrived before the UI callback was registered
+  // Owned stream per peer — tracks are added to this as they arrive
+  private peerStreams           = new Map<UserId, MediaStream>();
+
+  // Streams buffered before the UI callback was registered
   private pendingStreams        = new Map<UserId, MediaStream>();
 
   // ICE candidates queued before remote description is set
@@ -135,6 +138,7 @@ class WebRTCService {
   closePeer(userId: UserId): void {
     this.peers.get(userId)?.close();
     this.peers.delete(userId);
+    this.peerStreams.delete(userId);
     this.iceCandidateQueue.delete(userId);
     this.pendingStreams.delete(userId);
     this.onRemoteStream?.(userId, null);
@@ -146,6 +150,7 @@ class WebRTCService {
       this.onRemoteStream?.(userId, null);
     }
     this.peers.clear();
+    this.peerStreams.clear();
     this.iceCandidateQueue.clear();
     this.pendingStreams.clear();
     this.localStream?.getTracks().forEach((t) => t.stop());
@@ -191,16 +196,21 @@ class WebRTCService {
     };
 
     // Remote track received.
-    // ontrack fires once per track (audio, then video). streams[0] is a live
-    // object — its reference never changes, so React won't re-run the effect.
-    // We create a new MediaStream snapshot with ALL tracks received so far so
-    // every ontrack call produces a new reference and srcObject gets re-assigned.
-    pc.ontrack = ({ track, streams }) => {
-      const existingTracks = streams[0] ? streams[0].getTracks() : [];
-      const allTracks = existingTracks.includes(track)
-        ? existingTracks
-        : [...existingTracks, track];
-      const snapshot = new MediaStream(allTracks);
+    // ontrack fires once per track (audio then video). We accumulate all tracks
+    // into our own owned MediaStream so we never lose earlier tracks. Then we
+    // snapshot it into a NEW MediaStream so React always gets a new reference
+    // and the VideoTile effect always re-runs to update srcObject.
+    pc.ontrack = ({ track }) => {
+      let owned = this.peerStreams.get(userId);
+      if (!owned) {
+        owned = new MediaStream();
+        this.peerStreams.set(userId, owned);
+      }
+      if (!owned.getTrackById(track.id)) {
+        owned.addTrack(track);
+      }
+      // Snapshot = new reference every time = React re-renders = srcObject updated
+      const snapshot = new MediaStream(owned.getTracks());
 
       if (this.onRemoteStream) {
         this.onRemoteStream(userId, snapshot);

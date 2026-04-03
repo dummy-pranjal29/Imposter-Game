@@ -32,12 +32,13 @@ export function VideoTile({ displayName, stream, isLocal, isConnected, connState
     .toUpperCase()
     .slice(0, 2);
 
-  const connecting = !isLocal && !stream && connState !== 'failed' && connState !== 'closed';
-  const failed     = !isLocal && !stream && (connState === 'failed' || connState === 'closed');
+  const hasVideo   = !!stream && stream.getVideoTracks().length > 0;
+  const connecting = !isLocal && !hasVideo && connState !== 'failed' && connState !== 'closed';
+  const failed     = !isLocal && !hasVideo && (connState === 'failed' || connState === 'closed');
 
   return (
     <div className={`${styles.tile} ${!isConnected ? styles.offline : ''}`}>
-      {stream ? (
+      {hasVideo ? (
         <video
           ref={videoRef}
           autoPlay
