@@ -5,6 +5,9 @@ export const config = {
   env: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3001', 10),
   clientUrl: process.env.CLIENT_URL ?? 'http://localhost:5173',
+  allowedOrigins: process.env.CLIENT_URL
+    ? [process.env.CLIENT_URL, /\.vercel\.app$/]
+    : ['http://localhost:5173', 'http://localhost:4173'],
 
   redis: {
     url: process.env.REDIS_URL ?? 'redis://localhost:6379',

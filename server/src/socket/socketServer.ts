@@ -19,7 +19,7 @@ export async function createSocketServer(httpServer: HttpServer) {
     SocketData
   >(httpServer, {
     cors: {
-      origin: config.clientUrl,
+      origin: config.allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },

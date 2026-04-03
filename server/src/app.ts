@@ -15,7 +15,7 @@ export function createApp(): Application {
   // ── CORS: only allow our client origin ────────────────────────────
   app.use(
     cors({
-      origin: config.clientUrl,
+      origin: config.allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     })
