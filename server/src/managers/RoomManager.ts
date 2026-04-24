@@ -31,6 +31,7 @@ class RoomManager {
       roomId,
       players: new Map(),
       socketToUser: new Map(),
+      deviceToUser: new Map(),
       game: this.initialGameState(),
       chat: [],
       createdAt: Date.now(),
@@ -66,27 +67,33 @@ class RoomManager {
   // ── Player management ───────────────────────────────────────────────────────
 
   /**
-   * Add a new player to the room.
-   * Returns the assigned userId, or null if the room is full or the
-   * display name is already taken.
+   * Add a new player to the room, keyed by deviceId.
+   * - Same device, connected player  → ALREADY_IN_ROOM error.
+   * - Same device, disconnected player → reconnect (restores slot + isHost).
+   * - New device → create fresh player slot.
    */
   addPlayer(
     room: Room,
     socketId: string,
-    displayName: string
+    displayName: string,
+    deviceId: string
   ): { player: Player; alreadyExisted: boolean } | { error: string } {
-    // Check for reconnect (same display name, disconnected player)
-    for (const [, player] of room.players) {
-      if (
-        player.displayName === displayName &&
-        !player.isConnected
-      ) {
-        // Reconnect path — update socket, mark connected
-        player.socketId = socketId;
-        player.isConnected = true;
-        room.socketToUser.set(socketId, player.userId);
-        logger.info('Player reconnected', { roomId: room.roomId, userId: player.userId });
-        return { player, alreadyExisted: true };
+    const existingUserId = room.deviceToUser.get(deviceId);
+
+    if (existingUserId) {
+      const existing = room.players.get(existingUserId);
+      if (existing) {
+        if (existing.isConnected) {
+          return { error: 'ALREADY_IN_ROOM' };
+        }
+        // Reconnect: restore the slot for this device
+        room.socketToUser.delete(existing.socketId);
+        existing.socketId = socketId;
+        existing.displayName = displayName;
+        existing.isConnected = true;
+        room.socketToUser.set(socketId, existing.userId);
+        logger.info('Player reconnected', { roomId: room.roomId, userId: existing.userId });
+        return { player: existing, alreadyExisted: true };
       }
     }
 
@@ -111,6 +118,7 @@ class RoomManager {
       userId,
       socketId,
       displayName,
+      deviceId,
       isHost,
       isConnected: true,
       joinedAt: Date.now(),
@@ -118,6 +126,7 @@ class RoomManager {
 
     room.players.set(userId, player);
     room.socketToUser.set(socketId, userId);
+    room.deviceToUser.set(deviceId, userId);
     logger.info('Player added', { roomId: room.roomId, userId, displayName });
     return { player, alreadyExisted: false };
   }
@@ -153,6 +162,7 @@ class RoomManager {
     if (!player) return null;
 
     room.socketToUser.delete(player.socketId);
+    room.deviceToUser.delete(player.deviceId);
     room.players.delete(userId);
 
     // Re-assign host to earliest-joined connected player

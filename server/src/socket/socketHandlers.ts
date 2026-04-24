@@ -46,10 +46,15 @@ const descriptionRateLimit = makeRateLimiter(1,  120_000);
 export function registerSocketHandlers(io: AppServer, socket: AppSocket): void {
 
   // ── JOIN ROOM ─────────────────────────────────────────────────────────────
-  socket.on('join-room', ({ roomId, displayName }: JoinRoomPayload): void => {
+  socket.on('join-room', ({ roomId, displayName, deviceId }: JoinRoomPayload): void => {
     const cleanName = displayName?.trim().slice(0, 20);
     if (!cleanName) {
       socket.emit('error', { code: 'INVALID_NAME', message: 'Display name is required.' });
+      return;
+    }
+
+    if (!deviceId || typeof deviceId !== 'string') {
+      socket.emit('error', { code: 'INVALID_DEVICE', message: 'Invalid device identifier.' });
       return;
     }
 
@@ -59,11 +64,12 @@ export function registerSocketHandlers(io: AppServer, socket: AppSocket): void {
       return;
     }
 
-    const result = roomManager.addPlayer(room, socket.id, cleanName);
+    const result = roomManager.addPlayer(room, socket.id, cleanName, deviceId);
     if ('error' in result) {
       const messages: Record<string, string> = {
         ROOM_FULL: 'This room is full (max 5 players).',
         GAME_IN_PROGRESS: 'A game is already in progress.',
+        ALREADY_IN_ROOM: 'You are already in this room from another tab.',
       };
       socket.emit('error', {
         code: result.error,

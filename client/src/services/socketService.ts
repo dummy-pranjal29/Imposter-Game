@@ -48,8 +48,8 @@ class SocketService {
 
   // ── Outgoing ──────────────────────────────────────────────────────────────
 
-  joinRoom(roomId: string, displayName: string): void {
-    this.socket?.emit('join-room', { roomId, displayName });
+  joinRoom(roomId: string, displayName: string, deviceId: string): void {
+    this.socket?.emit('join-room', { roomId, displayName, deviceId });
   }
 
   leaveRoom(): void {

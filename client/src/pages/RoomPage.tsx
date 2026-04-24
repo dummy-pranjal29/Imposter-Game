@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socketService } from '../services/socketService';
 import { useGameStore } from '../store/gameStore';
+import { getDeviceId } from '../utils/deviceId';
 import styles from './RoomPage.module.css';
 
 /**
@@ -16,7 +17,7 @@ export function RoomPage() {
   const [roomMeta, setRoomMeta] = useState<{ canJoin: boolean; isFull: boolean } | null>(null);
   const [checking, setChecking] = useState(true);
 
-  const { players, isHost, phase, myUserId } = useGameStore();
+  const { players, isHost, phase, myUserId, lastError, setError } = useGameStore();
 
   // Validate room exists before asking for name
   useEffect(() => {
@@ -40,13 +41,21 @@ export function RoomPage() {
     }
   }, [phase, joined, navigate]);
 
+  // If the server rejects the join because this device is already in the room,
+  // roll back the optimistic joined=true so the error screen renders.
+  useEffect(() => {
+    if (lastError?.code === 'ALREADY_IN_ROOM') {
+      setJoined(false);
+    }
+  }, [lastError]);
+
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     const cleanName = name.trim();
     if (!cleanName || !roomId) return;
 
     socketService.connect();
-    socketService.joinRoom(roomId, cleanName);
+    socketService.joinRoom(roomId, cleanName, getDeviceId());
     setJoined(true);
   }
 
@@ -85,6 +94,18 @@ export function RoomPage() {
       <div className={styles.container}>
         <div className={styles.card}>
           <h2 className={styles.heading}>Join Room <span className={styles.code}>{roomId}</span></h2>
+          {lastError?.code === 'ALREADY_IN_ROOM' && (
+            <p className={styles.error}>
+              You are already in this room from another tab. Close the other tab to rejoin.
+              <button
+                className={styles.link}
+                style={{ display: 'block', marginTop: 8 }}
+                onClick={() => setError(null)}
+              >
+                Try again
+              </button>
+            </p>
+          )}
           <form onSubmit={handleJoin} className={styles.form}>
             <input
               className={styles.input}

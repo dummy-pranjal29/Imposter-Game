@@ -16,6 +16,7 @@ export interface Player {
   userId: UserId;
   socketId: string;
   displayName: string;
+  deviceId: string;
   isHost: boolean;
   isConnected: boolean;
   joinedAt: number;
@@ -73,6 +74,7 @@ export interface Room {
   roomId: string;
   players: Map<UserId, Player>;
   socketToUser: Map<string, UserId>;
+  deviceToUser: Map<string, UserId>;
   game: GameState;
   chat: ChatMessage[];
   createdAt: number;
@@ -137,6 +139,7 @@ export interface SocketData {
 export interface JoinRoomPayload {
   roomId: string;
   displayName: string;
+  deviceId: string;
 }
 
 export interface SubmitDescriptionPayload {
